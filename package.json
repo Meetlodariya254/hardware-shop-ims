@@ -1,0 +1,77 @@
+{
+  "name": "hardware-shop-ims",
+  "version": "1.0.0",
+  "description": "Hardware Shop Inventory Management System",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "concurrently \"npm run dev --prefix frontend\" \"npm run dev --prefix backend\" \"wait-on http://localhost:5173 && electron .\"",
+    "build:frontend": "npm run build --prefix frontend",
+    "prebuild:sqlite": "cd node_modules/better-sqlite3 && npx prebuild-install --runtime electron --target 32.2.6 --arch x64 --platform win32",
+    "pack:win": "npm run build:frontend && npm run prebuild:sqlite && electron-builder --win --x64"
+  },
+  "build": {
+    "appId": "com.hardwareshop.ims",
+    "productName": "Hardware Shop IMS",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "YOUR_GITHUB_USERNAME_HERE",
+        "repo": "YOUR_GITHUB_REPO_NAME_HERE"
+      }
+    ],
+    "directories": {
+      "output": "dist-app"
+    },
+    "files": [
+      "main.js",
+      "backend/**/*",
+      "frontend/dist/**/*"
+    ],
+    "asarUnpack": [
+      "**/node_modules/better-sqlite3/**",
+      "**/node_modules/bindings/**",
+      "**/node_modules/file-uri-to-path/**"
+    ],
+    "npmRebuild": false,
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    }
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "concurrently": "^10.0.3",
+    "electron": "^32.2.6",
+    "electron-builder": "^26.15.2",
+    "wait-on": "^9.0.10"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^12.10.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "electron-log": "^5.4.4",
+    "electron-updater": "^6.8.9",
+    "exceljs": "^3.4.0",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.3.1",
+    "helmet": "^7.1.0",
+    "joi": "^17.13.1",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "nodemailer": "^8.0.10",
+    "pdfkit": "^0.15.0",
+    "uuid": "^14.0.0",
+    "winston": "^3.19.0",
+    "winston-daily-rotate-file": "^5.0.0"
+  }
+}
