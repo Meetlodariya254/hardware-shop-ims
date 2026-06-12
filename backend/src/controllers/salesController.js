@@ -153,7 +153,7 @@ async function createSale(req, res, next) {
         const newStock = oldStock - item.quantity_sold;
 
         await client.query(
-          'UPDATE products SET current_stock = $1, updated_at = NOW() WHERE product_id = $2', [newStock, item.product_id]
+          'UPDATE products SET current_stock = $1, updated_at = CURRENT_TIMESTAMP WHERE product_id = $2', [newStock, item.product_id]
         );
 
         await client.query(
@@ -207,7 +207,7 @@ async function updateSale(req, res, next) {
            payment_method = COALESCE($2, payment_method),
            notes = COALESCE($3, notes),
            amount_paid = $4,
-           updated_at = NOW()
+           updated_at = CURRENT_TIMESTAMP
          WHERE sale_id = $5 RETURNING *`,
         [payment_status || null, payment_method || null, notes || null, newAmountPaid, id]
       );
@@ -234,7 +234,7 @@ async function deleteSale(req, res, next) {
         const stockResult = await client.query('SELECT current_stock FROM products WHERE product_id = $1', [item.product_id]);
         const oldStock = stockResult.rows[0].current_stock;
         const newStock = oldStock + item.quantity_sold;
-        await client.query('UPDATE products SET current_stock = $1, updated_at = NOW() WHERE product_id = $2', [newStock, item.product_id]);
+        await client.query('UPDATE products SET current_stock = $1, updated_at = CURRENT_TIMESTAMP WHERE product_id = $2', [newStock, item.product_id]);
         await client.query(
           `INSERT INTO stock_history (user_id, product_id, transaction_type, reference_id, quantity_change, old_stock, new_stock, notes)
            VALUES ($1, $2, 'Adjustment', $3, $4, $5, $6, 'Sale order deleted - stock restored')`,

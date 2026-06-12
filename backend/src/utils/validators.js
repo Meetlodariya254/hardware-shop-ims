@@ -90,7 +90,7 @@ const productSchema = Joi.object({
   category: Joi.string().min(2).max(100).required().messages({
     'any.required': 'Category is required',
   }),
-  brand: Joi.string().max(100).optional().allow(''),
+  brand: Joi.string().max(100).optional().allow(null, ''),
   purchase_price: Joi.number().positive().precision(2).required().messages({
     'number.positive': 'Purchase price must be greater than 0',
     'any.required': 'Purchase price is required',
@@ -105,9 +105,9 @@ const productSchema = Joi.object({
     'any.only': `Unit type must be one of: ${UNIT_TYPES.join(', ')}`,
     'any.required': 'Unit type is required',
   }),
-  sku: Joi.string().max(100).optional().allow(''),
-  product_code: Joi.string().max(100).optional().allow(''),
-  description: Joi.string().max(1000).optional().allow(''),
+  sku: Joi.string().max(100).optional().allow(null, ''),
+  product_code: Joi.string().max(100).optional().allow(null, ''),
+  description: Joi.string().max(1000).optional().allow(null, ''),
 });
 
 const updateProductSchema = productSchema.fork(
@@ -141,24 +141,26 @@ const supplierSchema = Joi.object({
 // ─── Purchase Schemas ──────────────────────────────────────────────────────────
 
 const purchaseItemSchema = Joi.object({
-  product_id: Joi.string().uuid().required(),
+  product_id: Joi.string().min(1).required(),
   quantity_purchased: Joi.number().integer().positive().required(),
-  purchase_price_per_unit: Joi.number().positive().precision(2).required(),
+  purchase_price_per_unit: Joi.number().positive().required(),
 });
 
 const purchaseOrderSchema = Joi.object({
-  supplier_id: Joi.string().uuid().required().messages({
+  supplier_id: Joi.string().min(1).required().messages({
     'any.required': 'Supplier is required',
   }),
-  purchase_date: Joi.date().max('now').required().messages({
-    'date.max': 'Purchase date cannot be in the future',
+  purchase_date: Joi.date().required().messages({
     'any.required': 'Purchase date is required',
   }),
   payment_status: Joi.string().valid('Paid', 'Pending', 'Partial').default('Pending'),
-  payment_method: Joi.string().valid('Cash', 'Cheque', 'Bank Transfer', 'Credit', 'UPI').optional().allow(''),
-  amount_paid: Joi.number().min(0).precision(2).optional().allow(null),
-  reference_number: Joi.string().max(100).optional().allow(''),
-  notes: Joi.string().max(1000).optional().allow(''),
+  payment_method: Joi.string().valid('Cash', 'Cheque', 'Bank Transfer', 'Credit', 'UPI').optional().allow(null, ''),
+  amount_paid: Joi.alternatives().try(
+    Joi.number().min(0),
+    Joi.string().allow('').empty('').default(null)
+  ).optional().default(null),
+  reference_number: Joi.string().max(100).optional().allow(null, ''),
+  notes: Joi.string().max(1000).optional().allow(null, ''),
   items: Joi.array().items(purchaseItemSchema).min(1).required().messages({
     'array.min': 'At least one product must be added',
     'any.required': 'Purchase items are required',
@@ -186,30 +188,35 @@ const customerSchema = Joi.object({
 // ─── Sales Schemas ─────────────────────────────────────────────────────────────
 
 const saleItemSchema = Joi.object({
-  product_id: Joi.string().uuid().required(),
+  product_id: Joi.string().min(1).required(),
   quantity_sold: Joi.number().integer().positive().required(),
-  selling_price_per_unit: Joi.number().positive().precision(2).required(),
+  selling_price_per_unit: Joi.number().positive().required(),
 });
 
 const salesOrderSchema = Joi.object({
-  customer_id: Joi.string().uuid().optional().allow(null, ''),
+  customer_id: Joi.string().min(1).optional().allow(null, ''),
   walkin_customer_name: Joi.string().max(255).optional().allow(null, ''),
-  sale_date: Joi.date().max('now').required().messages({
-    'date.max': 'Sale date cannot be in the future',
+  sale_date: Joi.date().required().messages({
     'any.required': 'Sale date is required',
   }),
   sale_time: Joi.string()
     .pattern(/^([01]\d|2[0-3]):([0-5]\d)$/)
     .optional()
-    .allow(''),
-  discount_amount: Joi.number().min(0).precision(2).default(0),
+    .allow(null, ''),
+  discount_amount: Joi.alternatives().try(
+    Joi.number().min(0),
+    Joi.string().allow('').empty('').default(0)
+  ).optional().default(0),
   payment_method: Joi.string()
     .valid('Cash', 'Card', 'Cheque', 'Credit', 'UPI')
     .required()
     .messages({ 'any.required': 'Payment method is required' }),
   payment_status: Joi.string().valid('Paid', 'Pending').default('Paid'),
-  amount_paid: Joi.number().min(0).precision(2).optional().allow(null),
-  notes: Joi.string().max(1000).optional().allow(''),
+  amount_paid: Joi.alternatives().try(
+    Joi.number().min(0),
+    Joi.string().allow('').empty('').default(null)
+  ).optional().default(null),
+  notes: Joi.string().max(1000).optional().allow(null, ''),
   items: Joi.array().items(saleItemSchema).min(1).required().messages({
     'array.min': 'At least one product must be added',
     'any.required': 'Sale items are required',

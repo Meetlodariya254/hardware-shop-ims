@@ -7,4 +7,5 @@ export const reportService = {
   getMonthlySales: (params) => api.get('/reports/monthly-sales', { params }),
   getStock: () => api.get('/reports/stock'),
   getPurchase: (params) => api.get('/reports/purchases', { params }),
+  downloadPDF: (params) => api.get('/reports/pdf', { params, responseType: 'blob' }),
 };

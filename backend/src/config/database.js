@@ -86,10 +86,14 @@ async function query(text, params = []) {
     if (Array.isArray(params)) {
       sqliteParams = {};
       params.forEach((val, idx) => {
-        // Serialize Date objects to date strings, booleans to 0/1
-        if (val instanceof Date) {
+        // Normalize undefined to null — better-sqlite3 throws on undefined params
+        if (val === undefined) {
+          sqliteParams[(idx + 1).toString()] = null;
+        } else if (val instanceof Date) {
+          // Serialize Date objects to ISO date strings
           sqliteParams[(idx + 1).toString()] = val.toISOString().split('T')[0];
         } else if (typeof val === 'boolean') {
+          // Serialize booleans to 0/1 for SQLite
           sqliteParams[(idx + 1).toString()] = val ? 1 : 0;
         } else {
           sqliteParams[(idx + 1).toString()] = val;

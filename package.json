@@ -16,8 +16,8 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "YOUR_GITHUB_USERNAME_HERE",
-        "repo": "YOUR_GITHUB_REPO_NAME_HERE"
+        "owner": "Meetlodariya254",
+        "repo": "hardware-shop-ims"
       }
     ],
     "directories": {

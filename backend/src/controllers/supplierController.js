@@ -99,9 +99,9 @@ async function updateSupplier(req, res, next) {
          supplier_name = COALESCE($1, supplier_name), mobile_number = COALESCE($2, mobile_number),
          email = COALESCE($3, email), address = COALESCE($4, address), city = COALESCE($5, city),
          gst_number = COALESCE($6, gst_number), bank_account = COALESCE($7, bank_account),
-         balance = COALESCE($8, balance), updated_at = NOW()
+         balance = COALESCE($8, balance), updated_at = CURRENT_TIMESTAMP
        WHERE supplier_id = $9 AND user_id = $10 RETURNING *`,
-      [supplier_name || null, mobile_number, email, address, city, gst_number, bank_account, balance ?? null, id, user_id]
+      [supplier_name || null, mobile_number || null, email || null, address || null, city || null, gst_number || null, bank_account || null, balance ?? null, id, user_id]
     );
     if (result.rows.length === 0) throw createError('Supplier not found', 404, 'SUPPLIER_NOT_FOUND');
     return successResponse(res, result.rows[0], 'Supplier updated successfully');

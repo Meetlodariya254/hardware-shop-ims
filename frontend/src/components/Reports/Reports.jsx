@@ -7,6 +7,53 @@ import {
   Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 
+// ─── PDF Download Helper ──────────────────────────────────────────────────────
+async function downloadPDF(params, label, setLoading) {
+  setLoading(true);
+  try {
+    const res = await reportService.downloadPDF(params);
+    const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = label + '.pdf';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error('PDF download failed', err);
+    alert('Failed to generate PDF. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+}
+
+// ─── Shared PDF Button ────────────────────────────────────────────────────────
+function PdfButton({ onClick, loading }) {
+  return (
+    <button
+      className="btn"
+      style={{
+        background: loading ? 'var(--gray-400)' : 'var(--success)',
+        color: 'white',
+        border: 'none',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+        cursor: loading ? 'not-allowed' : 'pointer',
+      }}
+      onClick={onClick}
+      disabled={loading}
+    >
+      {loading ? (
+        <><div className="spinner spinner-sm"></div> Generating...</>
+      ) : (
+        <>📥 Download PDF</>
+      )}
+    </button>
+  );
+}
+
 const TABS = [
   { id: 'profit', label: '💰 Profit Report' },
   { id: 'daily', label: '📅 Daily Sales' },
@@ -27,9 +74,11 @@ function StatCard({ label, value, color }) {
   );
 }
 
+// ─── Profit Report ────────────────────────────────────────────────────────────
 function ProfitReport() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const today = todayISO();
   const monthStart = today.slice(0, 7) + '-01';
   const [from, setFrom] = useState(monthStart);
@@ -57,6 +106,10 @@ function ProfitReport() {
         <button className="btn btn-primary" onClick={fetch} disabled={loading}>
           {loading ? <><div className="spinner spinner-sm"></div> Loading...</> : '🔍 Generate Report'}
         </button>
+        <PdfButton
+          loading={pdfLoading}
+          onClick={() => downloadPDF({ type: 'profit', from, to }, `profit_report_${from}_to_${to}`, setPdfLoading)}
+        />
       </div>
 
       {data && (
@@ -130,79 +183,96 @@ function ProfitReport() {
   );
 }
 
+// ─── Stock Report ─────────────────────────────────────────────────────────────
 function StockReport() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   useEffect(() => {
     reportService.getStock().then((r) => setData(r.data.data)).finally(() => setLoading(false));
   }, []);
 
   if (loading) return <div className="page-loader"><div className="spinner"></div></div>;
-  if (!data) return null;
 
   return (
     <div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
-        <StatCard label="Total Products" value={data.overview.total_products} />
-        <StatCard label="Inventory Value" value={formatCurrency(data.overview.inventory_value)} color="var(--primary)" />
-        <StatCard label="Retail Value" value={formatCurrency(data.overview.retail_value)} color="var(--success)" />
-        <StatCard label="Low / Out of Stock" value={`${data.overview.low_stock} / ${data.overview.out_of_stock}`} color="var(--warning)" />
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+        <PdfButton
+          loading={pdfLoading}
+          onClick={() => downloadPDF({ type: 'stock' }, `stock_report_${todayISO()}`, setPdfLoading)}
+        />
       </div>
 
-      {data.low_stock_items.length > 0 && (
-        <div className="card" style={{ marginBottom: 20 }}>
-          <div className="card-header">
-            <div className="card-title" style={{ color: 'var(--warning)' }}>⚠️ Low Stock & Out of Stock Items</div>
+      {data && (
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
+            <StatCard label="Total Products" value={data.overview.total_products} />
+            <StatCard label="Inventory Value" value={formatCurrency(data.overview.inventory_value)} color="var(--primary)" />
+            <StatCard label="Retail Value" value={formatCurrency(data.overview.retail_value)} color="var(--success)" />
+            <StatCard label="Low / Out of Stock" value={`${data.overview.low_stock} / ${data.overview.out_of_stock}`} color="var(--warning)" />
           </div>
-          <div className="table-container" style={{ border: 'none' }}>
-            <table className="table">
-              <thead><tr><th>Product</th><th>Category</th><th>Current Stock</th><th>Min. Level</th><th>Status</th><th>Stock Value</th></tr></thead>
-              <tbody>
-                {data.low_stock_items.map((item) => (
-                  <tr key={item.product_id} style={{ background: item.status === 'out_of_stock' ? 'var(--danger-bg)' : 'var(--warning-bg)' }}>
-                    <td style={{ fontWeight: 600 }}>{item.product_name}</td>
-                    <td><span className="badge badge-gray">{item.category}</span></td>
-                    <td style={{ fontWeight: 700, color: item.current_stock === 0 ? 'var(--danger)' : 'var(--warning)' }}>
-                      {item.current_stock} {item.unit_type}
-                    </td>
-                    <td>{item.minimum_stock_level} {item.unit_type}</td>
-                    <td>
-                      <span className={`badge ${item.status === 'out_of_stock' ? 'badge-danger' : 'badge-warning'}`}>
-                        {item.status === 'out_of_stock' ? '❌ Out of Stock' : '⚠️ Low Stock'}
-                      </span>
-                    </td>
-                    <td>{formatCurrency(item.stock_value)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+          {data.low_stock_items.length > 0 && (
+            <div className="card" style={{ marginBottom: 20 }}>
+              <div className="card-header">
+                <div className="card-title" style={{ color: 'var(--warning)' }}>⚠️ Low Stock & Out of Stock Items</div>
+              </div>
+              <div className="table-container" style={{ border: 'none' }}>
+                <table className="table">
+                  <thead><tr><th>Product</th><th>Category</th><th>Current Stock</th><th>Min. Level</th><th>Status</th><th>Stock Value</th></tr></thead>
+                  <tbody>
+                    {data.low_stock_items.map((item) => (
+                      <tr key={item.product_id} style={{ background: item.status === 'out_of_stock' ? 'var(--danger-bg)' : 'var(--warning-bg)' }}>
+                        <td style={{ fontWeight: 600 }}>{item.product_name}</td>
+                        <td><span className="badge badge-gray">{item.category}</span></td>
+                        <td style={{ fontWeight: 700, color: item.current_stock === 0 ? 'var(--danger)' : 'var(--warning)' }}>
+                          {item.current_stock} {item.unit_type}
+                        </td>
+                        <td>{item.minimum_stock_level} {item.unit_type}</td>
+                        <td>
+                          <span className={`badge ${item.status === 'out_of_stock' ? 'badge-danger' : 'badge-warning'}`}>
+                            {item.status === 'out_of_stock' ? '❌ Out of Stock' : '⚠️ Low Stock'}
+                          </span>
+                        </td>
+                        <td>{formatCurrency(item.stock_value)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          <div className="card">
+            <div className="card-header"><div className="card-title">Category-wise Stock</div></div>
+            <div className="table-container" style={{ border: 'none' }}>
+              <table className="table">
+                <thead><tr><th>Category</th><th>Products</th><th>Total Units</th><th>Inventory Value</th></tr></thead>
+                <tbody>
+                  {data.by_category.map((c) => (
+                    <tr key={c.category}>
+                      <td style={{ fontWeight: 600 }}>{c.category}</td>
+                      <td>{c.products}</td>
+                      <td>{c.total_units}</td>
+                      <td style={{ fontWeight: 700 }}>{formatCurrency(c.value)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        </>
       )}
 
-      <div className="card">
-        <div className="card-header"><div className="card-title">Category-wise Stock</div></div>
-        <div className="table-container" style={{ border: 'none' }}>
-          <table className="table">
-            <thead><tr><th>Category</th><th>Products</th><th>Total Units</th><th>Inventory Value</th></tr></thead>
-            <tbody>
-              {data.by_category.map((c) => (
-                <tr key={c.category}>
-                  <td style={{ fontWeight: 600 }}>{c.category}</td>
-                  <td>{c.products}</td>
-                  <td>{c.total_units}</td>
-                  <td style={{ fontWeight: 700 }}>{formatCurrency(c.value)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {!data && !loading && (
+        <div className="table-empty"><p>No stock data available</p></div>
+      )}
     </div>
   );
 }
 
+// ─── Main Reports Page ────────────────────────────────────────────────────────
 export default function Reports() {
   const [activeTab, setActiveTab] = useState('profit');
 
@@ -250,12 +320,14 @@ export default function Reports() {
   );
 }
 
+// ─── Daily Sales Report ───────────────────────────────────────────────────────
 function DailySalesReport() {
   const today = todayISO();
   const [from, setFrom] = useState(today);
   const [to, setTo] = useState(today);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   const fetch = () => {
     setLoading(true);
@@ -279,6 +351,10 @@ function DailySalesReport() {
         <button className="btn btn-primary" onClick={fetch} disabled={loading}>
           {loading ? 'Loading...' : '🔍 Generate'}
         </button>
+        <PdfButton
+          loading={pdfLoading}
+          onClick={() => downloadPDF({ type: 'daily', from, to }, `daily_sales_${from}_to_${to}`, setPdfLoading)}
+        />
       </div>
 
       {data && (
@@ -334,10 +410,12 @@ function DailySalesReport() {
   );
 }
 
+// ─── Monthly Sales Report ─────────────────────────────────────────────────────
 function MonthlySalesReport() {
   const [month, setMonth] = useState(currentMonthISO());
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   const fetch = () => {
     setLoading(true);
@@ -355,6 +433,10 @@ function MonthlySalesReport() {
           <input type="month" className="form-control" value={month} onChange={(e) => setMonth(e.target.value)} max={currentMonthISO()} />
         </div>
         <button className="btn btn-primary" onClick={fetch} disabled={loading}>{loading ? 'Loading...' : '🔍 Generate'}</button>
+        <PdfButton
+          loading={pdfLoading}
+          onClick={() => downloadPDF({ type: 'monthly', month }, `monthly_sales_${month}`, setPdfLoading)}
+        />
       </div>
 
       {data && (
@@ -406,6 +488,7 @@ function MonthlySalesReport() {
   );
 }
 
+// ─── Purchase Report Tab ──────────────────────────────────────────────────────
 function PurchaseReportTab() {
   const today = todayISO();
   const monthStart = today.slice(0, 7) + '-01';
@@ -413,6 +496,7 @@ function PurchaseReportTab() {
   const [to, setTo] = useState(today);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   const fetch = () => {
     setLoading(true);
@@ -434,6 +518,10 @@ function PurchaseReportTab() {
           <input type="date" className="form-control" value={to} onChange={(e) => setTo(e.target.value)} max={today} />
         </div>
         <button className="btn btn-primary" onClick={fetch} disabled={loading}>{loading ? 'Loading...' : '🔍 Generate'}</button>
+        <PdfButton
+          loading={pdfLoading}
+          onClick={() => downloadPDF({ type: 'purchase', from, to }, `purchase_report_${from}_to_${to}`, setPdfLoading)}
+        />
       </div>
 
       {data && (

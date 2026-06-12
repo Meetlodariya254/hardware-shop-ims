@@ -59,6 +59,7 @@ router.get('/reports/daily-sales', authenticate, reportController.getDailySalesR
 router.get('/reports/monthly-sales', authenticate, reportController.getMonthlySalesReport);
 router.get('/reports/stock', authenticate, reportController.getStockReport);
 router.get('/reports/purchases', authenticate, reportController.getPurchaseReport);
+router.get('/reports/pdf', authenticate, reportController.generateReportPDF);
 
 // App Settings (Email / SMTP configuration)
 router.get('/settings', authenticate, settingsController.getSettings);

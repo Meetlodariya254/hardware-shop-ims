@@ -96,9 +96,9 @@ async function updateCustomer(req, res, next) {
       `UPDATE customers SET
          customer_name = COALESCE($1, customer_name), mobile_number = COALESCE($2, mobile_number),
          email = COALESCE($3, email), address = COALESCE($4, address), city = COALESCE($5, city),
-         balance = COALESCE($6, balance), is_regular = COALESCE($7, is_regular), updated_at = NOW()
+         balance = COALESCE($6, balance), is_regular = COALESCE($7, is_regular), updated_at = CURRENT_TIMESTAMP
        WHERE customer_id = $8 AND user_id = $9 RETURNING *`,
-      [customer_name || null, mobile_number, email, address, city, balance ?? null, is_regular ?? null, id, user_id]
+      [customer_name || null, mobile_number || null, email || null, address || null, city || null, balance ?? null, is_regular ?? null, id, user_id]
     );
     if (result.rows.length === 0) throw createError('Customer not found', 404, 'CUSTOMER_NOT_FOUND');
     return successResponse(res, result.rows[0], 'Customer updated');

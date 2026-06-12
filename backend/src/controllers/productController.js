@@ -258,23 +258,23 @@ async function updateProduct(req, res, next) {
 
     const result = await query(
       `UPDATE products SET
-        product_name = COALESCE($1, product_name),
-        category = COALESCE($2, category),
-        brand = COALESCE($3, brand),
-        purchase_price = COALESCE($4, purchase_price),
-        selling_price = COALESCE($5, selling_price),
-        minimum_stock_level = COALESCE($6, minimum_stock_level),
-        unit_type = COALESCE($7, unit_type),
-        sku = COALESCE($8, sku),
-        product_code = COALESCE($9, product_code),
-        description = COALESCE($10, description),
-        updated_at = NOW()
+        product_name = $1,
+        category = $2,
+        brand = $3,
+        purchase_price = $4,
+        selling_price = $5,
+        minimum_stock_level = $6,
+        unit_type = $7,
+        sku = $8,
+        product_code = $9,
+        description = $10,
+        updated_at = CURRENT_TIMESTAMP
        WHERE product_id = $11 AND user_id = $12
        RETURNING *`,
       [
-        product_name || null, category || null, brand,
-        purchase_price || null, selling_price || null, minimum_stock_level || null,
-        unit_type || null, sku, product_code, description,
+        product_name, category, brand || null,
+        purchase_price, selling_price, minimum_stock_level || 0,
+        unit_type, sku || null, product_code || null, description || null,
         id, user_id,
       ]
     );

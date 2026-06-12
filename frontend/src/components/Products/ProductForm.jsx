@@ -59,11 +59,17 @@ export default function ProductForm({ product, onSuccess, onClose }) {
   const onSubmit = async (data) => {
     setIsLoading(true);
     try {
+      // Convert empty strings to null for optional fields to avoid database constraint issues
+      const cleanData = { ...data };
+      ['sku', 'product_code', 'brand', 'description'].forEach(key => {
+        if (cleanData[key] === '') cleanData[key] = null;
+      });
+
       if (isEdit) {
-        await productService.update(product.product_id, data);
+        await productService.update(product.product_id, cleanData);
         toast.success('Product updated successfully');
       } else {
-        await productService.create(data);
+        await productService.create(cleanData);
         toast.success('Product added successfully');
       }
       onSuccess();
