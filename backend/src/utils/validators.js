@@ -158,7 +158,7 @@ const purchaseOrderSchema = Joi.object({
   amount_paid: Joi.alternatives().try(
     Joi.number().min(0),
     Joi.string().allow('').empty('').default(null)
-  ).optional().default(null),
+  ).allow(null).optional().default(null),
   reference_number: Joi.string().max(100).optional().allow(null, ''),
   notes: Joi.string().max(1000).optional().allow(null, ''),
   items: Joi.array().items(purchaseItemSchema).min(1).required().messages({
@@ -215,7 +215,7 @@ const salesOrderSchema = Joi.object({
   amount_paid: Joi.alternatives().try(
     Joi.number().min(0),
     Joi.string().allow('').empty('').default(null)
-  ).optional().default(null),
+  ).allow(null).optional().default(null),
   notes: Joi.string().max(1000).optional().allow(null, ''),
   items: Joi.array().items(saleItemSchema).min(1).required().messages({
     'array.min': 'At least one product must be added',

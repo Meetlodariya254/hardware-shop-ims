@@ -56,7 +56,7 @@ export default function Settings() {
   const saveProfile = async (data) => {
     setSaving(true);
     try {
-      const res = await api.put('/auth/update-profile', data);
+      const res = await api.put('/auth/profile', data);
       updateUser(res.data.data);
       toast.success('Profile updated!');
     } catch (err) { toast.error(err?.response?.data?.message || 'Failed to update'); }
