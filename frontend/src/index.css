@@ -92,6 +92,49 @@
   --z-toast: 300;
 }
 
+/* ─── Dark Mode Overrides ───────────────────────────────────────── */
+[data-theme='dark'] {
+  /* Brand Colors (Accent / Highlight) */
+  --primary: #3F51B5;
+  --primary-light: #5C6BC0;
+  --primary-dark: #303F9F;
+
+  /* Surface Colors */
+  --bg-app: #121212;
+  --bg-card: #1E1E1E;
+  --bg-card-hover: #2C2C2C;
+  --bg-sidebar: #121212;
+  --bg-navbar: #1E1E1E;
+  --border-color: #2D2D2D;
+  --border-strong: #404040;
+
+  /* Text */
+  --text-primary: #FFFFFF;
+  --text-secondary: #9E9E9E;
+  --text-muted: #757575;
+  --text-on-primary: #FFFFFF;
+
+  /* Shadows for dark mode (less spread, more opacity) */
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.4), 0 2px 4px -1px rgba(0,0,0,0.2);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.4), 0 4px 6px -2px rgba(0,0,0,0.2);
+  --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.4), 0 10px 10px -5px rgba(0,0,0,0.2);
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.2), 0 1px 8px rgba(0,0,0,0.3);
+
+  /* Inverted Neutrals */
+  --gray-50:  #111827;
+  --gray-100: #1f2937;
+  --gray-200: #374151;
+  --gray-300: #4b5563;
+  --gray-400: #6b7280;
+  --gray-500: #9ca3af;
+  --gray-600: #d1d5db;
+  --gray-700: #e5e7eb;
+  --gray-800: #f3f4f6;
+  --gray-900: #f9fafb;
+}
+
 /* ─── Reset & Base ──────────────────────────────────────────────── */
 *, *::before, *::after {
   box-sizing: border-box;

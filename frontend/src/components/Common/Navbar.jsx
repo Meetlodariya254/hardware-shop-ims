@@ -1,13 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import toast from 'react-hot-toast';
 import {
   MdNotifications, MdLogout, MdPerson, MdSettings, MdKeyboardArrowDown,
+  MdDarkMode, MdLightMode
 } from 'react-icons/md';
 
 export default function Navbar({ title, subtitle, lowStockCount = 0, sidebarCollapsed }) {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -41,6 +44,14 @@ export default function Navbar({ title, subtitle, lowStockCount = 0, sidebarColl
       </div>
 
       <div className="navbar-actions">
+        <button 
+          className="navbar-btn" 
+          onClick={toggleTheme}
+          title="Toggle Dark Mode"
+        >
+          {theme === 'dark' ? <MdLightMode /> : <MdDarkMode />}
+        </button>
+
         {lowStockCount > 0 && (
           <button
             className="navbar-btn"
