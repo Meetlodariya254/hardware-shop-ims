@@ -11,6 +11,7 @@ const {
 } = require('../utils/tokenUtils');
 const { sendPasswordResetEmail } = require('../utils/emailService');
 const { createError } = require('../middleware/errorHandler');
+const logger = require('../utils/logger');
 
 // ─── Helper ────────────────────────────────────────────────────────────────────
 
@@ -112,6 +113,7 @@ async function login(req, res, next) {
 
     const isValid = await comparePassword(password, user.password_hash);
     if (!isValid) {
+      logger.warn(`[AUTH] Failed login attempt for email: ${email.toLowerCase()} from IP: ${req.ip}`);
       throw createError('Invalid email or password', 401, 'INVALID_CREDENTIALS');
     }
 
@@ -124,6 +126,7 @@ async function login(req, res, next) {
     const refreshToken = generateRefreshToken(tokenPayload);
 
     setAuthCookies(res, accessToken, refreshToken);
+    logger.info(`[AUTH] Successful login for user_id: ${user.user_id} email: ${user.email} from IP: ${req.ip}`);
 
     return successResponse(res, {
       user: userWithoutPassword,
@@ -204,6 +207,7 @@ async function forgotPassword(req, res, next) {
     const user = result.rows[0];
     const resetToken = generatePasswordResetToken({ user_id: user.user_id, type: 'password_reset' });
 
+    logger.info(`[AUTH] Password reset requested for user_id: ${user.user_id} email: ${user.email} from IP: ${req.ip}`);
     const emailResult = await sendPasswordResetEmail(user.email, resetToken, user.shop_owner_name);
 
     // If SMTP is not configured (local desktop app), include the reset token
@@ -240,6 +244,16 @@ async function resetPassword(req, res, next) {
       throw createError('Invalid reset token type', 400, 'INVALID_RESET_TOKEN');
     }
 
+    // Check if this reset token has already been used (prevent token reuse)
+    const tokenKey = `reset_token_used_${decoded.user_id}_${decoded.iat}`;
+    const usedCheck = await query(
+      `SELECT setting_value FROM app_settings WHERE setting_key = $1`,
+      [tokenKey]
+    );
+    if (usedCheck.rows.length > 0 && usedCheck.rows[0].setting_value === '1') {
+      throw createError('This password reset link has already been used. Please request a new one.', 400, 'RESET_TOKEN_ALREADY_USED');
+    }
+
     const password_hash = await hashPassword(new_password);
 
     const result = await query(
@@ -250,6 +264,14 @@ async function resetPassword(req, res, next) {
     if (result.rows.length === 0) {
       throw createError('User not found', 404, 'USER_NOT_FOUND');
     }
+
+    // Mark token as used so it cannot be reused
+    await query(
+      `INSERT OR REPLACE INTO app_settings (setting_key, setting_value, description) VALUES ($1, '1', 'Used password reset token')`,
+      [tokenKey]
+    );
+
+    logger.info(`[AUTH] Password reset completed for user_id: ${decoded.user_id} from IP: ${req.ip}`);
 
     return successResponse(res, null, 'Password has been reset successfully. Please log in.');
   } catch (err) {

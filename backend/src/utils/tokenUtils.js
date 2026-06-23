@@ -45,7 +45,7 @@ function verifyRefreshToken(token) {
  * Generate a short-lived token for password reset (1 hour)
  */
 function generatePasswordResetToken(payload) {
-  return jwt.sign(payload, config.jwt.secret, {
+  return jwt.sign(payload, config.jwt.resetSecret, {
     expiresIn: '1h',
     issuer: 'hardware-shop-ims-reset',
   });
@@ -55,7 +55,7 @@ function generatePasswordResetToken(payload) {
  * Verify a password reset token
  */
 function verifyPasswordResetToken(token) {
-  return jwt.verify(token, config.jwt.secret, {
+  return jwt.verify(token, config.jwt.resetSecret, {
     issuer: 'hardware-shop-ims-reset',
   });
 }

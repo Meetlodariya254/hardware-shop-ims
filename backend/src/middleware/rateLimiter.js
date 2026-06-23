@@ -8,7 +8,7 @@ const rateLimit = require('express-rate-limit');
  */
 const loginRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20,
+  max: 5,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -23,11 +23,11 @@ const loginRateLimiter = rateLimit({
 
 /**
  * General API rate limiter
- * 100 requests per 15 minutes
+ * 500 requests per 15 minutes
  */
 const generalRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 2000,
+  max: 500,
   standardHeaders: true,
   legacyHeaders: false,
   message: {

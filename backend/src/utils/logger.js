@@ -3,6 +3,8 @@
 const winston = require('winston');
 const DailyRotateFile = require('winston-daily-rotate-file');
 const { config } = require('../config/environment');
+const path = require('path');
+const os = require('os');
 
 const logFormat = winston.format.combine(
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
@@ -19,31 +21,36 @@ const consoleFormat = winston.format.combine(
   )
 );
 
+// Always write logs to the user's AppData directory so the Electron app
+// (which runs as "development") has a persistent audit trail on disk.
+const logDir = path.join(
+  process.env.APPDATA || process.env.HOME || os.homedir(),
+  'HardwareShopIMS',
+  'logs'
+);
+
 const transports = [
   new winston.transports.Console({
     format: config.node_env === 'development' ? consoleFormat : logFormat,
   }),
+  // Always persist error logs
+  new DailyRotateFile({
+    filename: path.join(logDir, 'error-%DATE%.log'),
+    datePattern: 'YYYY-MM-DD',
+    zippedArchive: true,
+    maxSize: '20m',
+    maxFiles: '14d',
+    level: 'error',
+  }),
+  // Always persist all logs (info and above)
+  new DailyRotateFile({
+    filename: path.join(logDir, 'combined-%DATE%.log'),
+    datePattern: 'YYYY-MM-DD',
+    zippedArchive: true,
+    maxSize: '20m',
+    maxFiles: '14d',
+  }),
 ];
-
-if (config.node_env === 'production') {
-  transports.push(
-    new DailyRotateFile({
-      filename: 'logs/error-%DATE%.log',
-      datePattern: 'YYYY-MM-DD',
-      zippedArchive: true,
-      maxSize: '20m',
-      maxFiles: '14d',
-      level: 'error',
-    }),
-    new DailyRotateFile({
-      filename: 'logs/combined-%DATE%.log',
-      datePattern: 'YYYY-MM-DD',
-      zippedArchive: true,
-      maxSize: '20m',
-      maxFiles: '14d',
-    })
-  );
-}
 
 const logger = winston.createLogger({
   level: config.node_env === 'development' ? 'debug' : 'info',

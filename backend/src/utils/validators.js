@@ -138,6 +138,11 @@ const supplierSchema = Joi.object({
   bank_account: Joi.string().max(50).optional().allow(''),
 });
 
+const updateSupplierSchema = supplierSchema.fork(
+  ['supplier_name'],
+  (schema) => schema.optional()
+);
+
 // ─── Purchase Schemas ──────────────────────────────────────────────────────────
 
 const purchaseItemSchema = Joi.object({
@@ -184,6 +189,11 @@ const customerSchema = Joi.object({
   balance: Joi.number().precision(2).optional().allow(null).default(0),
   is_regular: Joi.boolean().default(false),
 });
+
+const updateCustomerSchema = customerSchema.fork(
+  ['customer_name'],
+  (schema) => schema.optional()
+);
 
 // ─── Sales Schemas ─────────────────────────────────────────────────────────────
 
@@ -233,8 +243,10 @@ module.exports = {
   productSchema,
   updateProductSchema,
   supplierSchema,
+  updateSupplierSchema,
   purchaseOrderSchema,
   customerSchema,
+  updateCustomerSchema,
   salesOrderSchema,
   UNIT_TYPES,
   PRODUCT_CATEGORIES,

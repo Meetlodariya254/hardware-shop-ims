@@ -20,7 +20,21 @@ const app = express();
 
 // ─── Security Middleware ──────────────────────────────────────────────────────
 app.use(helmet({
-  contentSecurityPolicy: false, // Disabled to allow API usage without CSP issues
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"], // React inline styles
+      imgSrc: ["'self'", 'data:', 'blob:'],    // data: URIs for SVG icons, blob: for exports
+      fontSrc: ["'self'", 'data:'],
+      connectSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      frameSrc: ["'none'"],
+      workerSrc: ["'self'", 'blob:'],           // blob: workers for PDF/Excel
+      upgradeInsecureRequests: null,             // Disable for HTTP localhost
+    },
+  },
+  crossOriginEmbedderPolicy: false,             // Keep false: Electron uses HTTP
 }));
 
 // CORS — only allow our frontend

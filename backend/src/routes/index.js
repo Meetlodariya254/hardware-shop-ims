@@ -14,7 +14,7 @@ const reportController = require('../controllers/reportController');
 const settingsController = require('../controllers/settingsController');
 const { authenticate } = require('../middleware/authMiddleware');
 const { validate } = require('../middleware/requestValidator');
-const { supplierSchema, purchaseOrderSchema, customerSchema, salesOrderSchema } = require('../utils/validators');
+const { supplierSchema, purchaseOrderSchema, customerSchema, salesOrderSchema, updateSupplierSchema, updateCustomerSchema } = require('../utils/validators');
 
 const router = express.Router();
 
@@ -28,7 +28,7 @@ router.use('/products', productRoutes);
 router.get('/suppliers', authenticate, supplierController.getAllSuppliers);
 router.post('/suppliers', authenticate, validate(supplierSchema), supplierController.createSupplier);
 router.get('/suppliers/:id', authenticate, supplierController.getSupplier);
-router.put('/suppliers/:id', authenticate, supplierController.updateSupplier);
+router.put('/suppliers/:id', authenticate, validate(updateSupplierSchema), supplierController.updateSupplier);
 router.delete('/suppliers/:id', authenticate, supplierController.deleteSupplier);
 
 // Purchases
@@ -42,7 +42,7 @@ router.delete('/purchases/:id', authenticate, purchaseController.deletePurchase)
 router.get('/customers', authenticate, customerController.getAllCustomers);
 router.post('/customers', authenticate, validate(customerSchema), customerController.createCustomer);
 router.get('/customers/:id', authenticate, customerController.getCustomer);
-router.put('/customers/:id', authenticate, customerController.updateCustomer);
+router.put('/customers/:id', authenticate, validate(updateCustomerSchema), customerController.updateCustomer);
 router.delete('/customers/:id', authenticate, customerController.deleteCustomer);
 
 // Sales
